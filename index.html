@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e6569">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Feedback">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Studio Trotta · Feedback</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<style>
+  :root { --brand:#0e6569; --soft:#e6eeef; --text:#12393b; --muted:#557274; --line:#cfdcdd; --ok:#2f8f5b; --warn:#c0702a; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--soft); color: var(--text); font-family: "Satoshi", system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.45; min-height: 100vh; }
+  header { background: var(--brand); color: #fff; padding: calc(env(safe-area-inset-top) + 18px) 18px 56px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 700; }
+  header small { opacity: .8; font-size: 13px; }
+  #refresh { background: rgba(255,255,255,.16); color: #fff; border: 0; border-radius: 10px; padding: 9px 14px; font: inherit; font-size: 14px; font-weight: 500; }
+  main { max-width: 520px; margin: -36px auto 0; padding: 0 14px calc(env(safe-area-inset-bottom) + 30px); }
+  .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(31,95,91,.08); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi { background: var(--soft); border-radius: 12px; padding: 12px; }
+  .kpi b { display: block; font-size: 28px; line-height: 1.1; color: var(--brand); }
+  .kpi span { font-size: 12.5px; color: var(--muted); }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  .bar { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+  .bar i { flex: 1; height: 10px; background: var(--soft); border-radius: 6px; overflow: hidden; }
+  .bar u { display: block; height: 100%; background: var(--brand); border-radius: 6px; text-decoration: none; }
+  .bar em { width: 22px; text-align: right; font-style: normal; color: var(--muted); }
+  .item { padding: 12px 0; border-top: 1px solid var(--line); }
+  .item:first-of-type { border-top: 0; padding-top: 0; }
+  .item .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .item .nome { font-weight: 700; }
+  .badge { font-weight: 700; border-radius: 8px; padding: 2px 9px; font-size: 14px; color: #fff; }
+  .v5, .v4 { background: var(--ok); } .v3 { background: var(--warn); } .v2, .v1 { background: var(--bad); }
+  .item .sub { color: var(--muted); font-size: 13px; }
+  .item .txt { margin-top: 6px; font-size: 15px; }
+  .g { font-size: 12px; color: var(--brand); font-weight: 700; margin-top: 6px; }
+  .msg { text-align: center; color: var(--muted); padding: 24px 10px; }
+  .msg button { margin-top: 12px; background: var(--brand); color: #fff; border: 0; border-radius: 12px; padding: 12px 18px; font: inherit; font-weight: 700; }
+  .note { font-size: 12.5px; color: var(--muted); text-align: center; margin: 4px 8px 0; }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Studio Trotta</h1><small id="agg">Feedback dei pazienti</small></div>
+  <button id="refresh">Aggiorna</button>
+</header>
+<main id="app"><div class="card msg">Carico i dati…</div></main>
+<script>
+(function () {
+  var API = "https://giuliog.app.n8n.cloud/webhook/trotta-stats";
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $("app");
+  var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+  // la chiave arriva dal link (#k=...) la prima volta e resta salvata sul telefono
+  var m = location.hash.match(/k=([^&]+)/);
+  if (m) { LS.set("trotta_k", decodeURIComponent(m[1])); history.replaceState(null, "", location.pathname); }
+  var KEY = LS.get("trotta_k");
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  function askKey() {
+    app.innerHTML = '<div class="card msg">Per vedere i dati apri il link privato che ti ha dato Giulio, oppure incolla qui la chiave.<br><input id="k" style="margin-top:12px;width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;font:inherit"><br><button id="ks">Entra</button></div>';
+    $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("trotta_k", v); KEY = v; load(); } };
+  }
+
+  function render(d) {
+    var pct = d.inviate ? Math.round(d.risposte / d.inviate * 100) : 0;
+    var maxD = Math.max.apply(null, d.distribuzione.concat([1]));
+    var h = '<div class="card"><div class="grid">' +
+      '<div class="kpi"><b>' + d.inviate + '</b><span>Richieste inviate</span></div>' +
+      '<div class="kpi"><b>' + d.risposte + '</b><span>Hanno risposto (' + pct + '%)</span></div>' +
+      '<div class="kpi"><b>' + (d.media == null ? "–" : String(d.media).replace(".", ",")) + '</b><span>Voto medio su 5</span></div>' +
+      '<div class="kpi"><b>' + d.click + '</b><span>Hanno aperto Google per recensire</span></div></div></div>';
+    h += '<div class="card"><h2>Come hanno votato</h2>';
+    for (var n = 5; n >= 1; n--) {
+      var c = d.distribuzione[n - 1];
+      h += '<div class="bar"><span style="width:14px">' + n + '</span><i><u style="width:' + Math.round(c / maxD * 100) + '%"></u></i><em>' + c + '</em></div>';
+    }
+    h += '</div><div class="card"><h2>Ultimi feedback</h2>';
+    if (!d.voti.length) h += '<div class="msg">Ancora nessun feedback.</div>';
+    d.voti.forEach(function (v) {
+      h += '<div class="item"><div class="top"><span class="nome">' + esc(v.nome) + '</span><span class="badge v' + v.voto + '">' + v.voto + '/5</span></div>' +
+        '<div class="sub">' + esc(v.trattamento) + '</div>' +
+        (v.commento ? '<div class="txt">' + esc(v.commento) + '</div>' : '') +
+        (v.google ? '<div class="g">✓ Ha aperto Google per recensire</div>' : '') + '</div>';
+    });
+    h += '</div><div class="note">Nota: Google non dice se la recensione è stata pubblicata davvero. Qui vedi chi ha aperto la pagina per scriverla.</div>';
+    app.innerHTML = h;
+    $("agg").textContent = "Aggiornato alle " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function load() {
+    if (!KEY) return askKey();
+    app.innerHTML = '<div class="card msg">Carico i dati…</div>';
+    fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) { LS.set("trotta_k", ""); KEY = ""; return askKey(); }
+        LS.set("trotta_cache", JSON.stringify(d)); render(d);
+      })
+      .catch(function () {
+        var c = LS.get("trotta_cache");
+        if (c) { try { render(JSON.parse(c)); $("agg").textContent = "Offline: ultimi dati salvati"; return; } catch (e) {} }
+        app.innerHTML = '<div class="card msg">Non riesco a caricare i dati. Controlla la connessione e riprova.<br><button onclick="location.reload()">Riprova</button></div>';
+      });
+  }
+  $("refresh").onclick = load;
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+  load();
+})();
+</script>
+</body>
+</html>
