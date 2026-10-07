@@ -14,7 +14,7 @@
   header button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
   .wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;max-width:1200px;margin:0 auto;padding:16px}
   .tools{display:flex;gap:8px;margin-bottom:10px}
-  .tools input,.tools select,textarea,select.st{width:100%;border:1px solid var(--l);border-radius:8px;padding:9px 10px;font:inherit;background:#fff}
+  .tools input,.tools select,textarea,select.st,.keyin input{width:100%;border:1px solid var(--l);border-radius:8px;padding:9px 10px;font:inherit;background:#fff}
   .tools select{width:auto}
   .item{background:var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;border:2px solid transparent}
   .item.on{border-color:var(--v)}
@@ -31,6 +31,7 @@
   .acts a,.btn{background:var(--v);color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}
   .acts a.alt{background:var(--g);color:var(--v)}
   .msg{padding:40px 16px;text-align:center;color:var(--m)}
+  .keyin{background:var(--b);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
   .back{display:none}
   @media(max-width:800px){
     .wrap{grid-template-columns:1fr;padding:12px}
@@ -67,13 +68,22 @@ try{
   if(m){KEY=decodeURIComponent(m[1]);localStorage.setItem('tk',KEY);history.replaceState(null,'',location.pathname)}
   else KEY=localStorage.getItem('tk')||'';
 }catch(e){}
+function askKey(msg){
+  $('l').innerHTML='<div class="keyin"><div>'+esc(msg)+'</div><input id="ki" placeholder="Incolla qui la chiave" autocomplete="off" autocapitalize="off" autocorrect="off"><button class="btn" id="kb">Entra</button></div>';
+  $('kb').onclick=()=>{
+    const v=$('ki').value.trim().replace(/^.*k=/,'');
+    if(!v)return;
+    KEY=v;try{localStorage.setItem('tk',KEY)}catch(e){}
+    load()
+  }
+}
 async function load(){
-  if(!KEY){$('l').innerHTML='<div class="msg">Apri il link completo che ti è stato dato.</div>';return}
+  if(!KEY){askKey('Manca la chiave di accesso. Incollala qui (è la parte dopo "k=" nel link che ti è stato dato).');return}
   $('l').innerHTML='<div class="msg">Carico…</div>';
   try{
     const r=await fetch(API+'trotta-richieste?k='+encodeURIComponent(KEY),{cache:'no-store'});
     const j=await r.json();
-    if(!j.ok){$('l').innerHTML='<div class="msg">Link non valido.</div>';return}
+    if(!j.ok){KEY='';try{localStorage.removeItem('tk')}catch(e){}askKey('Chiave non valida. Riprova.');return}
     DATA=j.richieste;draw();if(SEL)show(SEL,true)
   }catch(e){$('l').innerHTML='<div class="msg">Non riesco a caricare. Riprova.</div>'}
 }
