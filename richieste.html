@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Richieste · Studio Trotta</title>
+<style>
+  :root{--v:#0E6569;--g:#E6EEEF;--t:#1d2b2c;--m:#5b6b6c;--b:#fff;--l:#d3dfe0}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--g);color:var(--t);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:var(--v);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+  header h1{font-size:18px;margin:0;flex:1}
+  header button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
+  .wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;max-width:1200px;margin:0 auto;padding:16px}
+  .tools{display:flex;gap:8px;margin-bottom:10px}
+  .tools input,.tools select,textarea,select.st{width:100%;border:1px solid var(--l);border-radius:8px;padding:9px 10px;font:inherit;background:#fff}
+  .tools select{width:auto}
+  .item{background:var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;border:2px solid transparent}
+  .item.on{border-color:var(--v)}
+  .item .n{font-weight:600}
+  .item .s{color:var(--m);font-size:13px}
+  .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--g);color:var(--v);margin-top:4px}
+  .tag.Nuova{background:#fde8c8;color:#8a5200}
+  .tag.Chiusa{background:#e4e4e4;color:#555}
+  .panel{background:var(--b);border-radius:14px;padding:18px 20px;min-height:200px}
+  .panel h2{margin:0 0 2px;color:var(--v)}
+  .row{margin:12px 0}
+  .row b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--m)}
+  .acts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .acts a,.btn{background:var(--v);color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}
+  .acts a.alt{background:var(--g);color:var(--v)}
+  .msg{padding:40px 16px;text-align:center;color:var(--m)}
+  .back{display:none}
+  @media(max-width:800px){
+    .wrap{grid-template-columns:1fr;padding:12px}
+    .panel{display:none}
+    body.det .list{display:none}
+    body.det .panel{display:block}
+    .back{display:inline-block;background:var(--g);color:var(--v);border:0;border-radius:8px;padding:7px 12px;margin-bottom:10px;font:inherit;cursor:pointer}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Richieste di valutazione</h1>
+  <button id="rl">Aggiorna</button>
+</header>
+<div class="wrap">
+  <div class="list">
+    <div class="tools">
+      <input id="q" placeholder="Cerca nome, zona, telefono…">
+      <select id="f"><option value="">Tutte</option><option>Nuova</option><option>Contattata</option><option>Valutazione fissata</option><option>Prima visita fissata</option><option>Chiusa</option></select>
+    </div>
+    <div id="l"></div>
+  </div>
+  <div class="panel" id="p"><div class="msg">Scegli una richiesta dalla lista</div></div>
+</div>
+<script>
+const API='https://giuliog.app.n8n.cloud/webhook/';
+const STATI=['Nuova','Contattata','Valutazione fissata','Prima visita fissata','Chiusa'];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let KEY='',DATA=[],SEL=null;
+try{
+  const m=location.hash.match(/k=([^&]+)/);
+  if(m){KEY=decodeURIComponent(m[1]);localStorage.setItem('tk',KEY);history.replaceState(null,'',location.pathname)}
+  else KEY=localStorage.getItem('tk')||'';
+}catch(e){}
+async function load(){
+  if(!KEY){$('l').innerHTML='<div class="msg">Apri il link completo che ti è stato dato.</div>';return}
+  $('l').innerHTML='<div class="msg">Carico…</div>';
+  try{
+    const r=await fetch(API+'trotta-richieste?k='+encodeURIComponent(KEY),{cache:'no-store'});
+    const j=await r.json();
+    if(!j.ok){$('l').innerHTML='<div class="msg">Link non valido.</div>';return}
+    DATA=j.richieste;draw();if(SEL)show(SEL,true)
+  }catch(e){$('l').innerHTML='<div class="msg">Non riesco a caricare. Riprova.</div>'}
+}
+function draw(){
+  const q=$('q').value.toLowerCase(),f=$('f').value;
+  const rows=DATA.filter(r=>(!f||r.stato===f)&&(!q||[r.nome,r.cognome,r.zona,r.telefono,r.citta].join(' ').toLowerCase().includes(q)));
+  $('l').innerHTML=rows.length?rows.map(r=>`<div class="item${SEL===r.id?' on':''}" data-id="${esc(r.id)}"><div class="n">${esc(r.nome)} ${esc(r.cognome)}</div><div class="s">${esc(r.zona)} · ${esc(r.data.slice(0,10))}${r.referti.length?' · 📎':''}</div><span class="tag ${esc(r.stato.split(' ')[0])}">${esc(r.stato)}</span></div>`).join(''):'<div class="msg">Nessuna richiesta.</div>';
+  document.querySelectorAll('.item').forEach(e=>e.onclick=()=>show(e.dataset.id));
+}
+function show(id,keep){
+  SEL=id;const r=DATA.find(x=>x.id===id);if(!r)return;
+  if(!keep)document.body.classList.add('det');
+  const tel=r.telefono.replace(/[^\d+]/g,'');
+  const R=(t,v)=>v?`<div class="row"><b>${t}</b>${esc(v).replace(/\n/g,'<br>')}</div>`:'';
+  $('p').innerHTML=`<button class="back" id="bk">← Lista</button>
+  <h2>${esc(r.nome)} ${esc(r.cognome)}</h2>
+  <div class="s" style="color:var(--m)">${esc(r.data)} · ${esc(r.citta)} · ${esc(r.numero)}</div>
+  <div class="acts">
+    ${tel?`<a href="tel:${esc(tel)}">Chiama</a><a class="alt" href="https://wa.me/${esc(tel.replace(/^\+/,'').replace(/^(?!39)/,'39'))}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+    ${r.email?`<a class="alt" href="mailto:${esc(r.email)}">Email</a>`:''}
+  </div>
+  ${R('Telefono',r.telefono)}${R('Email',r.email)}${R('Zona',r.zona)}${R('Cosa sente e come è iniziato',r.descrizione)}${R('Da quanto tempo',r.durata)}${R('Momento più intenso',r.momento)}${R('Attività difficile',r.attivita)}${R('Altri trattamenti',r.provato)}${R('Quali trattamenti',r.trattamenti)}${R('Farmaci',r.farmaciSiNo)}${R('Quali farmaci',r.farmaci)}
+  <div class="row"><b>Referti</b>${r.referti.length?r.referti.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener">Referto ${i+1}</a>`).join(' · '):'Nessuno'}</div>
+  <div class="row"><b>Comunicazioni promozionali</b>${r.marketing?'Consenso dato':'Non acconsente'}</div>
+  <div class="row"><b>Stato</b><select class="st" id="st">${STATI.map(s=>`<option${s===r.stato?' selected':''}>${s}</option>`).join('')}</select></div>
+  <div class="row"><b>Note</b><textarea id="nt" rows="4">${esc(r.note)}</textarea></div>
+  <button class="btn" id="sv">Salva</button> <span id="ok" style="color:var(--m)"></span>`;
+  $('bk').onclick=()=>document.body.classList.remove('det');
+  $('sv').onclick=async()=>{
+    $('ok').textContent='Salvo…';
+    try{
+      const stato=$('st').value,note=$('nt').value;
+      const x=await fetch(API+'trotta-richieste-stato',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({k:KEY,id,stato,note})});
+      if(!x.ok)throw 0;
+      r.stato=stato;r.note=note;$('ok').textContent='Salvato ✓';draw()
+    }catch(e){$('ok').textContent='Errore, riprova'}
+  };
+  draw();
+}
+$('rl').onclick=load;$('q').oninput=draw;$('f').onchange=draw;
+load();
+</script>
+</body>
+</html>
