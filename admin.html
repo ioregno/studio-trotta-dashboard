@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#0e6569">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Feedback">
-<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="Trotta Admin">
+<link rel="manifest" href="manifest-admin.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Studio Trotta · Feedback</title>
+<title>Studio Trotta · Admin</title>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
 <style>
   :root { --brand:#0e6569; --soft:#e6eeef; --text:#12393b; --muted:#557274; --line:#cfdcdd; --ok:#2f8f5b; --warn:#c0702a; --bad:#b3261e; }
@@ -83,7 +83,7 @@
 </head>
 <body>
 <header>
-  <div><img src="logo.png" alt="Studio Trotta"><small id="agg">Feedback dei pazienti</small></div>
+  <div><img src="logo.png" alt="Studio Trotta"><small id="agg">Versione completa</small></div>
   <button id="refresh" aria-label="Aggiorna">↻</button>
 </header>
 <main id="app"><div class="card msg">Carico i dati…</div></main>
@@ -91,6 +91,7 @@
   <button data-t="req"><span>📥</span>Richieste</button>
   <button data-t="res" class="on"><span>📊</span>Resoconto</button>
   <button data-t="new"><span>⭐</span>Recensioni</button>
+  <button data-t="goo"><span>📍</span>Google</button>
 </nav>
 <script>
 (function () {
@@ -101,17 +102,20 @@
 
   // la chiave arriva dal link (#k=...) la prima volta e resta salvata sul telefono
   var m = location.hash.match(/(?:^#|&)k=([^&]+)/);
-  if (m) { LS.set("trotta_k", decodeURIComponent(m[1])); }
+  if (m) { LS.set("adm_k", decodeURIComponent(m[1])); }
+  var ma = location.hash.match(/(?:^#|&)a=([^&]+)/);
+  if (ma) { LS.set("adm_a", decodeURIComponent(ma[1])); }
+  var AKEY = LS.get("adm_a");
   var r2 = location.hash.match(/(?:^#|&)r=([^&]+)/);
   if (r2) { try { localStorage.setItem("tk", decodeURIComponent(r2[1])); } catch (e) {} }
-  if (m || r2) history.replaceState(null, "", location.pathname);
-  var KEY = LS.get("trotta_k");
+  if (m || r2 || ma) history.replaceState(null, "", location.pathname);
+  var KEY = LS.get("adm_k");
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   function askKey() {
     app.innerHTML = '<div class="card msg">Per vedere i dati apri il link privato che ti ha dato Giulio, oppure incolla qui la chiave.<br><input id="k" style="margin-top:12px;width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;font:inherit"><br><button id="ks">Entra</button></div>';
-    $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("trotta_k", v); KEY = v; go(TAB); } };
+    $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("adm_k", v); KEY = v; go(TAB); } };
   }
 
   function render(d) {
@@ -149,12 +153,12 @@
     fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (!d || !d.ok) { LS.set("trotta_k", ""); KEY = ""; return askKey(); }
-        LS.set("trotta_cache", JSON.stringify(d)); if (TAB === "res") render(d);
+        if (!d || !d.ok) { LS.set("adm_k", ""); KEY = ""; return askKey(); }
+        LS.set("adm_cache", JSON.stringify(d)); if (TAB === "res") render(d);
       })
       .catch(function () {
         if (TAB !== "res") return;
-        var c = LS.get("trotta_cache");
+        var c = LS.get("adm_cache");
         if (c) { try { render(JSON.parse(c)); $("agg").textContent = "Offline: ultimi dati salvati"; return; } catch (e) {} }
         app.innerHTML = '<div class="card msg">Non riesco a caricare i dati. Controlla la connessione e riprova.<br><button onclick="location.reload()">Riprova</button></div>';
       });
@@ -162,6 +166,9 @@
 
   var TAB = "res";
   var API_NEW = "https://giuliog.app.n8n.cloud/webhook/trotta-nuovo-invio";
+  var API_G = "https://giuliog.app.n8n.cloud/webhook/trotta-google";
+  var API_R = "https://giuliog.app.n8n.cloud/webhook/trotta-google-recensioni";
+  var API_GS = "https://giuliog.app.n8n.cloud/webhook/trotta-google-salva";
   var CHECK = '<div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
 
   function go(t) {
@@ -171,6 +178,7 @@
     if (!KEY) return askKey();
     if (t === "req") return viewReq();
     if (t === "new") return viewNew();
+    if (t === "goo") return viewGoogle();
     loadRes();
   }
   [].forEach.call(document.querySelectorAll("#nav button"), function (b) { b.onclick = function () { go(b.dataset.t); }; });
@@ -204,6 +212,77 @@
     };
   }
 
+  function dlt(a, b) {
+    if (b == null || a == null) return "";
+    var d = Math.round((a - b) * 10) / 10; if (!d) return "";
+    return '<span class="delta ' + (d > 0 ? "up" : "dn") + '">' + (d > 0 ? "▲ +" : "▼ ") + String(d).replace(".", ",") + '</span>';
+  }
+
+
+  function loadAuto() {
+    if (!AKEY) { app.insertAdjacentHTML("afterbegin", '<div class="card msg">Manca la chiave admin (parametro a= nel link): senza non vedo le recensioni lette da Google.</div>'); return; }
+    fetch(API_R + "?a=" + encodeURIComponent(AKEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (TAB !== "goo") return;
+      if (!d || !d.ok) { app.insertAdjacentHTML("afterbegin", '<div class="card msg">Chiave admin non valida.</div>'); return; }
+      var h = '<div class="card"><h2>Recensioni su Google (lette ogni giorno alle 08:00)</h2>';
+      if (d.totale == null) h += '<div class="msg" style="padding:10px">Ancora nessuna lettura: la chiave Google non è stata inserita o la prima lettura delle 08:00 non è ancora partita.</div>';
+      else {
+        h += '<div class="grid"><div class="kpi"><b>' + d.totale + dlt(d.totale, d.storico.length > 1 ? d.storico[d.storico.length - 2].totale : null) + '</b><span>Recensioni totali · media ' + String(d.media).replace(".", ",") + '</span></div>' +
+          '<div class="kpi"><b>' + d.portate + '</b><span>Possibilmente portate dal servizio</span></div></div>' +
+          '<div class="note" style="text-align:left;margin:10px 2px 0">Sono abbinamenti per nome, quindi solo “possibili”' + (d.solo_nome ? ' (' + d.solo_nome + ' con il solo nome, i meno affidabili)' : '') + '. Aggiornato il ' + esc(String(d.aggiornato).split("-").reverse().join("/")) + '.</div>';
+      }
+      h += '</div>';
+      if (d.recensioni && d.recensioni.length) {
+        h += '<div class="card"><h2>Recensioni lette</h2>';
+        d.recensioni.slice(0, 40).forEach(function (x) {
+          var st = ""; for (var i = 1; i <= 5; i++) st += i <= x.stelle ? "★" : "☆";
+          h += '<div class="item"><div class="top"><span class="nome">' + esc(x.autore) + '</span><span style="color:#f2b01e;letter-spacing:1px">' + st + '</span></div>' +
+            '<div class="sub">' + esc(String(x.pubblicata).slice(0, 10).split("-").reverse().join("/")) + '</div>' +
+            (x.testo ? '<div class="txt">' + esc(x.testo) + '</div>' : '') +
+            (x.match ? '<div class="g">Possibile paziente: ' + esc(x.paziente) + (x.match === "bassa" ? " (solo nome)" : " (nome e cognome/iniziale)") + '</div>' : '') + '</div>';
+        });
+        h += '</div><div class="note">Google rende disponibili solo poche recensioni alla volta: se in un giorno ne arrivano molte, qualcuna può sfuggire.</div>';
+      }
+      app.insertAdjacentHTML("afterbegin", h);
+    }).catch(function () {});
+  }
+
+  function viewGoogle() {
+    $("agg").textContent = "Scheda Google";
+    app.innerHTML = '<div class="card msg">Carico i dati…</div>';
+    fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (TAB !== "goo") return;
+      if (!d || !d.ok) { LS.set("adm_k", ""); KEY = ""; return askKey(); }
+      var r = d.righe || [], L = r[r.length - 1], P = r[r.length - 2], h = "";
+      if (!L) h += '<div class="card msg">Ancora nessun dato. Aggiungi i primi numeri qui sotto.</div>';
+      else {
+        var K = [["chiamate", "Chiamate dalla scheda"], ["indicazioni", "Richieste di indicazioni"], ["sito", "Visite al sito"], ["recensioni", "Recensioni su Google"]];
+        h += '<div class="card"><h2>Scheda Google · ' + esc(L.data.split("-").reverse().join("/")) + '</h2><div class="grid">';
+        K.forEach(function (x) { h += '<div class="kpi"><b>' + L[x[0]] + dlt(L[x[0]], P && P[x[0]]) + '</b><span>' + x[1] + '</span></div>'; });
+        h += '</div><div class="hero" style="margin-top:14px"><div><div class="big" style="font-size:40px">' + String(L.media).replace(".", ",") + '</div><div class="stars">★★★★★</div><small>media su Google</small></div></div></div>';
+        if (r.length > 1) {
+          var mx = Math.max.apply(null, r.map(function (x) { return x.chiamate; }).concat([1]));
+          h += '<div class="card"><h2>Chiamate nel tempo</h2><div style="display:flex;align-items:flex-end;gap:6px;height:90px">';
+          r.slice(-12).forEach(function (x) { h += '<div style="flex:1;text-align:center;font-size:10px;color:var(--muted)"><div style="background:var(--brand);border-radius:6px 6px 2px 2px;height:' + Math.max(4, Math.round(x.chiamate / mx * 70)) + 'px"></div>' + x.chiamate + '</div>'; });
+          h += '</div></div>';
+        }
+      }
+      h += '<div class="card"><details><summary>＋ Aggiorna i numeri</summary><div class="two">' +
+        '<div><label class="l">Chiamate</label><input class="f" id="g1" type="number" inputmode="numeric"></div><div><label class="l">Indicazioni</label><input class="f" id="g2" type="number" inputmode="numeric"></div>' +
+        '<div><label class="l">Visite sito</label><input class="f" id="g3" type="number" inputmode="numeric"></div><div><label class="l">N° recensioni</label><input class="f" id="g4" type="number" inputmode="numeric"></div></div>' +
+        '<label class="l">Media stelle</label><input class="f" id="g5" inputmode="decimal" placeholder="4,8">' +
+        '<button class="go" id="gs">Salva</button><div class="err" id="ge"></div></details></div>';
+      app.innerHTML = h;
+      loadAuto();
+      $("gs").onclick = function () {
+        var v = [1, 2, 3, 4, 5].map(function (i) { return $("g" + i).value; });
+        if (v.some(function (x) { return x === ""; })) { $("ge").textContent = "Compila tutti i campi."; return; }
+        var b = $("gs"); b.disabled = true; b.textContent = "Salvo…";
+        post(API_GS, { chiamate: v[0], indicazioni: v[1], sito: v[2], recensioni: v[3], media: v[4] }).then(function (j) { if (!j || !j.ok) throw 0; viewGoogle(); })
+          .catch(function () { b.disabled = false; b.textContent = "Salva"; $("ge").textContent = "Non sono riuscito a salvare, riprova."; });
+      };
+    }).catch(function () { if (TAB !== "goo") return; app.innerHTML = '<div class="card msg">Non riesco a caricare i dati.<br><button onclick="location.reload()">Riprova</button></div>'; });
+  }
   $("refresh").onclick = function () { $("refresh").classList.add("spin"); go(TAB); setTimeout(function () { $("refresh").classList.remove("spin"); }, 900); };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
   go('res');
