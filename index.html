@@ -103,7 +103,7 @@
   // la chiave arriva dal link (#k=...) la prima volta e resta salvata sul telefono
   var m = location.hash.match(/(?:^#|&)k=([^&]+)/);
   if (m) { LS.set("trotta_k", decodeURIComponent(m[1])); }
-  var r2 = location.hash.match(/r=([^&]+)/);
+  var r2 = location.hash.match(/(?:^#|&)r=([^&]+)/);
   if (r2) { try { localStorage.setItem("tk", decodeURIComponent(r2[1])); } catch (e) {} }
   if (m || r2) history.replaceState(null, "", location.pathname);
   var KEY = LS.get("trotta_k");
