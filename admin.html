@@ -273,7 +273,7 @@
         '<label class="l">Media stelle</label><input class="f" id="g5" inputmode="decimal" placeholder="4,8">' +
         '<button class="go" id="gs">Salva</button><div class="err" id="ge"></div></details></div>';
       app.innerHTML = h;
-      loadAuto();
+      // loadAuto(); // lettura recensioni Google: in pausa
       $("gs").onclick = function () {
         var v = [1, 2, 3, 4, 5].map(function (i) { return $("g" + i).value; });
         if (v.some(function (x) { return x === ""; })) { $("ge").textContent = "Compila tutti i campi."; return; }
