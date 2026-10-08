@@ -151,9 +151,10 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d || !d.ok) { LS.set("trotta_k", ""); KEY = ""; return askKey(); }
-        LS.set("trotta_cache", JSON.stringify(d)); render(d);
+        LS.set("trotta_cache", JSON.stringify(d)); if (TAB === "res") render(d);
       })
       .catch(function () {
+        if (TAB !== "res") return;
         var c = LS.get("trotta_cache");
         if (c) { try { render(JSON.parse(c)); $("agg").textContent = "Offline: ultimi dati salvati"; return; } catch (e) {} }
         app.innerHTML = '<div class="card msg">Non riesco a caricare i dati. Controlla la connessione e riprova.<br><button onclick="location.reload()">Riprova</button></div>';
@@ -217,6 +218,7 @@
     $("agg").textContent = "Scheda Google";
     app.innerHTML = '<div class="card msg">Carico i dati…</div>';
     fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (TAB !== "goo") return;
       if (!d || !d.ok) { LS.set("trotta_k", ""); KEY = ""; return askKey(); }
       var r = d.righe || [], L = r[r.length - 1], P = r[r.length - 2], h = "";
       if (!L) h += '<div class="card msg">Ancora nessun dato. Aggiungi i primi numeri qui sotto.</div>';
@@ -245,7 +247,7 @@
         post(API_GS, { chiamate: v[0], indicazioni: v[1], sito: v[2], recensioni: v[3], media: v[4] }).then(function (j) { if (!j || !j.ok) throw 0; viewGoogle(); })
           .catch(function () { b.disabled = false; b.textContent = "Salva"; $("ge").textContent = "Non sono riuscito a salvare, riprova."; });
       };
-    }).catch(function () { app.innerHTML = '<div class="card msg">Non riesco a caricare i dati.<br><button onclick="location.reload()">Riprova</button></div>'; });
+    }).catch(function () { if (TAB !== "goo") return; app.innerHTML = '<div class="card msg">Non riesco a caricare i dati.<br><button onclick="location.reload()">Riprova</button></div>'; });
   }
   $("refresh").onclick = function () { $("refresh").classList.add("spin"); go(TAB); setTimeout(function () { $("refresh").classList.remove("spin"); }, 900); };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
