@@ -65,6 +65,9 @@
   nav button span { font-size: 20px; line-height: 1.1; }
   nav button.on { background: var(--brand); color: #fff; box-shadow: 0 6px 16px rgba(14,101,105,.35); }
   label.l { display: block; font-size: 13px; font-weight: 700; margin: 14px 2px 6px; }
+  label.ora { display: flex; align-items: center; gap: 10px; margin: 16px 2px 0; font-size: 15px; font-weight: 700; cursor: pointer; }
+  label.ora input { width: 22px; height: 22px; accent-color: #0e6569; margin: 0; }
+  label.ora small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
   input.f { width: 100%; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; font: inherit; font-size: 16px; background: #fff; color: var(--text); outline: none; -webkit-appearance: none; appearance: none; }
   input.f:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(14,101,105,.15); }
   .go { width: 100%; margin-top: 20px; padding: 16px; border: 0; border-radius: 16px; background: var(--brand); color: #fff; font: inherit; font-size: 16px; font-weight: 700; box-shadow: 0 10px 24px rgba(14,101,105,.35); }
@@ -195,16 +198,17 @@
 
   function viewNew() {
     $("agg").textContent = "Richiedi recensioni";
-    app.innerHTML = '<div class="card" id="fx"><h2 style="font-size:20px;margin-bottom:2px">Richiedi recensioni ⭐</h2><div class="sub" style="color:var(--muted);font-size:14px">Inserisci il paziente: la richiesta parte in automatico il giorno dopo.</div>' +
+    app.innerHTML = '<div class="card" id="fx"><h2 style="font-size:20px;margin-bottom:2px">Richiedi recensioni ⭐</h2><div class="sub" style="color:var(--muted);font-size:14px">Inserisci il paziente: la richiesta parte in automatico il giorno dopo, oppure subito se spunti “Invia ora”.</div>' +
       '<label class="l" for="n">Nome e cognome</label><input class="f" id="n" placeholder="Mario Rossi" autocomplete="off">' +
       '<label class="l" for="t">Telefono</label><input class="f" id="t" type="tel" inputmode="tel" placeholder="333 1234567" autocomplete="off">' +
       '<label class="l" for="p">Problematica</label><input class="f" id="p" placeholder="Es. lombalgia, cervicale, ginocchio" autocomplete="off">' +
+      '<label class="ora"><input type="checkbox" id="o"><span>Invia ora<small>Manda l\'SMS subito invece di domani</small></span></label>' +
       '<button class="go" id="s">Richiedi recensione</button><div class="err" id="e"></div></div>';
     $("s").onclick = function () {
       var n = $("n").value.trim(), t = $("t").value.trim(), p = $("p").value.trim();
       if (n.length < 2 || t.replace(/\D/g, "").length < 6 || p.length < 2) { $("e").textContent = "Compila tutti i campi."; return; }
       $("e").textContent = ""; var b = $("s"); b.disabled = true; b.textContent = "Salvo…";
-      post(API_NEW, { nome: n, telefono: t, problematica: p }).then(function (j) {
+      post(API_NEW, { nome: n, telefono: t, problematica: p, ora: $("o").checked }).then(function (j) {
         if (!j || !j.ok) throw 0;
         $("fx").innerHTML = '<div class="done">' + CHECK + '<h2>Fatto</h2><p>La richiesta per <b>' + esc(n) + '</b> partirà ' + esc(j.quando) + '.</p><button class="go ghost" id="a">Aggiungi un altro paziente</button></div>';
         $("a").onclick = viewNew;
