@@ -172,13 +172,16 @@
       }
       h += '</div>';
     } else h += '<div class="card muted">Ancora nessun dato. Inserisci i primi numeri.</div>';
-    h += '<div class="card"><b>Nuovi numeri</b><div class="two"><div><label>Chiamate</label><input id="g1" type="number" inputmode="numeric"></div><div><label>Indicazioni</label><input id="g2" type="number" inputmode="numeric"></div><div><label>Visite sito</label><input id="g3" type="number" inputmode="numeric"></div><div><label>N° recensioni</label><input id="g4" type="number" inputmode="numeric"></div></div><label>Punteggio medio</label><input id="g5" inputmode="decimal" placeholder="4,8"><button class="go" id="gs">Salva</button><div class="err" id="ge"></div></div>';
+    h += '<div class="card"><b>Nuovi numeri</b><div class="muted" style="margin-top:4px">Compila solo quelli che vuoi cambiare: gli altri restano come ultima volta.</div><div class="two"><div><label>Chiamate</label><input id="g1" type="number" inputmode="numeric"></div><div><label>Indicazioni</label><input id="g2" type="number" inputmode="numeric"></div><div><label>Visite sito</label><input id="g3" type="number" inputmode="numeric"></div><div><label>N° recensioni</label><input id="g4" type="number" inputmode="numeric"></div></div><label>Punteggio medio</label><input id="g5" inputmode="decimal" placeholder="4,8"><button class="go" id="gs">Salva</button><div class="err" id="ge"></div></div>';
     return h;
   }
   function bindAgg(c, o) {
     $("gs").onclick = function () {
       var v = [1, 2, 3, 4, 5].map(function (i) { return $("g" + i).value; });
-      if (v.some(function (x) { return x === ""; })) { $("ge").textContent = "Compila tutti i campi."; return; }
+      if (v.every(function (x) { return x === ""; })) { $("ge").textContent = "Inserisci almeno un numero."; return; }
+      // i campi lasciati vuoti mantengono l'ultimo valore salvato
+      var L = o.g && o.g.L, F = ["chiamate", "indicazioni", "sito", "recensioni", "media"];
+      v = v.map(function (x, i) { return x !== "" ? x : (L && L[F[i]] != null ? L[F[i]] : 0); });
       var b = $("gs"); b.disabled = true; b.textContent = "Salvo…";
       post(c, { chiamate: v[0], indicazioni: v[1], sito: v[2], recensioni: v[3], media: v[4] }).then(function (j) { if (!j || !j.ok) throw 0; return load(c); })
         .then(function (x) { DATA[c.id] = x; detail(c.id, "agg"); })
