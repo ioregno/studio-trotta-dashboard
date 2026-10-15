@@ -139,13 +139,32 @@
     $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("trotta_k", v); LS.set("shared_k", v); KEY = v; go(TAB); } };
   }
 
+  var GURL = "https://g.page/r/CbRUZ80fe1BFEBM";
+  function gTop() {
+    var el = $("gtop"); if (!el) return;
+    function show(L) {
+      if (!$("gtop")) return;
+      var st = ""; var full = L && L.media ? Math.round(parseFloat(String(L.media).replace(",", "."))) : 0; for (var i = 1; i <= 5; i++) st += i <= full ? "★" : "☆";
+      var h = '<div class="card"><h2 style="margin:0 0 10px">Su Google adesso</h2>';
+      if (L) h += '<div class="grid"><div class="kpi"><b>' + esc(L.recensioni) + '</b><span>Recensioni Google</span></div><div class="kpi"><b>' + esc(String(L.media).replace(".", ",")) + ' <span style="font-size:18px;color:#f2b01e">' + st + '</span></b><span>Punteggio</span></div></div>';
+      else h += '<div class="msg" style="padding:6px">Dati in arrivo.</div>';
+      h += '<a class="go" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" href="' + GURL + '" target="_blank" rel="noopener">Apri la scheda Google ↗</a></div>';
+      $("gtop").innerHTML = h;
+    }
+    var c = LS.get("g_cache"); if (c) { try { show(JSON.parse(c)); } catch (e) { show(null); } } else show(null);
+    fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || !d.ok || !d.righe || !d.righe.length) return;
+      var L = d.righe[d.righe.length - 1]; LS.set("g_cache", JSON.stringify({ recensioni: L.recensioni, media: L.media })); show(L);
+    }).catch(function () {});
+  }
+
   function render(d) {
     var pct = d.inviate ? Math.round(d.risposte / d.inviate * 100) : 0;
     var maxD = Math.max.apply(null, d.distribuzione.concat([1]));
     var R = 36, C = 2 * Math.PI * R;
     var full = d.media == null ? 0 : Math.round(d.media);
     var stars = ""; for (var i = 1; i <= 5; i++) stars += i <= full ? "★" : "☆";
-    var h = '<div class="card"><div class="hero"><div><div class="big">' + (d.media == null ? "–" : String(d.media).replace(".", ",")) + '</div><div class="stars">' + stars + '</div><small>voto medio su 5</small></div>' +
+    var h = '<div id="gtop"></div><div class="card"><h2 style="margin:0 0 10px">Recensioni richieste con il servizio</h2><div class="hero"><div><div class="big">' + (d.media == null ? "–" : String(d.media).replace(".", ",")) + '</div><div class="stars">' + stars + '</div><small>voto medio su 5</small></div>' +
       '<div class="ring"><svg width="84" height="84"><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="9"/><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="#e6eeef" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (C * pct / 100) + ' ' + C + '"/></svg><b>' + pct + '%<small>risposte</small></b></div></div>' +
       '<div class="grid" style="margin-top:16px">' +
       '<div class="kpi"><b>' + d.inviate + '</b><span>Richieste inviate</span></div>' +
@@ -165,6 +184,7 @@
     });
     h += '</div><div class="note">Nota: Google non dice se la recensione è stata pubblicata davvero. Qui vedi chi ha aperto la pagina per scriverla.</div>';
     app.innerHTML = h;
+    gTop();
     $("agg").textContent = "Aggiornato alle " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   }
 
@@ -187,6 +207,7 @@
 
   var TAB = "res";
   var API_REL = "https://giuliog.app.n8n.cloud/webhook/trotta-rilascia";
+  var API_G = "https://giuliog.app.n8n.cloud/webhook/trotta-google";
   var API_NEW = "https://giuliog.app.n8n.cloud/webhook/trotta-nuovo-invio";
   var CHECK = '<div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
 
