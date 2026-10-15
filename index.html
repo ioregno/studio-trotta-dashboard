@@ -186,6 +186,7 @@
   }
 
   var TAB = "res";
+  var API_REL = "https://giuliog.app.n8n.cloud/webhook/trotta-rilascia";
   var API_NEW = "https://giuliog.app.n8n.cloud/webhook/trotta-nuovo-invio";
   var CHECK = '<div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
 
@@ -210,6 +211,23 @@
     app.innerHTML = '<iframe src="richieste.html" title="Richieste" style="width:100%;height:calc(100vh - 210px);min-height:420px;border:0;border-radius:18px;background:#fff;box-shadow:0 6px 18px rgba(31,95,91,.12)"></iframe>';
   }
 
+  function loadBozze() {
+    fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      var el = $("bzl"); if (!el || !d || !d.ok || !d.bozze || !d.bozze.length) return;
+      var h = '<div class="card"><h2 style="font-size:18px;margin:0 0 4px">In attesa di invio (' + d.bozze.length + ')</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:8px">Non partiranno finché non li fai partire tu.</div>';
+      d.bozze.forEach(function (b, i) {
+        h += '<div style="padding:10px 0;border-top:1px solid var(--line)"><b>' + esc(b.nome) + '</b> <span style="color:var(--muted);font-size:13px">' + esc(b.trattamento) + '</span><div style="display:flex;gap:8px;margin-top:8px"><button class="go" style="margin:0;padding:10px" data-i="' + i + '" data-o="0">Invia domani</button><button class="go ghost" style="margin:0;padding:10px" data-i="' + i + '" data-o="1">Invia ora</button></div></div>';
+      });
+      el.innerHTML = h + '</div>';
+      el.querySelectorAll("button").forEach(function (bt) {
+        bt.onclick = function () {
+          var b = d.bozze[+bt.dataset.i]; bt.disabled = true; bt.textContent = "…";
+          post(API_REL, { id: b.id, nome: b.nome, telefono: b.telefono, ora: bt.dataset.o === "1" }).then(function (j) { if (!j || !j.ok) throw 0; bt.parentNode.parentNode.innerHTML = '<span style="color:var(--muted)">' + esc(b.nome) + ': parte ' + esc(j.quando) + '</span>'; }).catch(function () { bt.disabled = false; bt.textContent = "Riprova"; });
+        };
+      });
+    }).catch(function () {});
+  }
+
   function viewNew() {
     $("agg").textContent = "Richiedi recensioni";
     app.innerHTML = '<div class="card" id="fx"><h2 style="font-size:20px;margin-bottom:2px">Richiedi recensioni ⭐</h2><div class="sub" style="color:var(--muted);font-size:14px">Inserisci il paziente: la richiesta parte in automatico il giorno dopo, oppure subito se spunti “Invia ora”.</div>' +
@@ -217,14 +235,18 @@
       '<label class="l" for="t">Telefono</label><input class="f" id="t" type="tel" inputmode="tel" placeholder="333 1234567" autocomplete="off">' +
       '<label class="l" for="p">Problematica</label><input class="f" id="p" placeholder="Es. lombalgia, cervicale, ginocchio" autocomplete="off">' +
       '<label class="ora"><input type="checkbox" id="o"><span>Invia ora<small>Manda l\'SMS subito invece di domani</small></span></label>' +
-      '<button class="go" id="s">Richiedi recensione</button><div class="err" id="e"></div></div>';
+      '<label class="ora"><input type="checkbox" id="bz"><span>Solo salva, non inviare<small>Resta in attesa: lo fai partire tu quando vuoi</small></span></label>' +
+      '<button class="go" id="s">Richiedi recensione</button><div class="err" id="e"></div></div><div id="bzl"></div>';
+    $("o").onchange = function () { if (this.checked) $("bz").checked = false; };
+    $("bz").onchange = function () { if (this.checked) $("o").checked = false; };
+    loadBozze();
     $("s").onclick = function () {
       var n = $("n").value.trim(), t = $("t").value.trim(), p = $("p").value.trim();
       if (n.length < 2 || t.replace(/\D/g, "").length < 6 || p.length < 2) { $("e").textContent = "Compila tutti i campi."; return; }
       $("e").textContent = ""; var b = $("s"); b.disabled = true; b.textContent = "Salvo…";
-      post(API_NEW, { nome: n, telefono: t, problematica: p, ora: $("o").checked }).then(function (j) {
+      post(API_NEW, { nome: n, telefono: t, problematica: p, ora: $("o").checked, bozza: $("bz").checked }).then(function (j) {
         if (!j || !j.ok) throw 0;
-        $("fx").innerHTML = '<div class="done">' + CHECK + '<h2>Fatto</h2><p>La richiesta per <b>' + esc(n) + '</b> partirà ' + esc(j.quando) + '.</p><button class="go ghost" id="a">Aggiungi un altro paziente</button></div>';
+        $("fx").innerHTML = '<div class="done">' + CHECK + '<h2>Fatto</h2><p>' + ($("bz").checked ? 'Ho salvato <b>' + esc(n) + '</b>: non parte finché non lo invii tu.' : 'La richiesta per <b>' + esc(n) + '</b> partirà ' + esc(j.quando) + '.') + '</p><button class="go ghost" id="a">Aggiungi un altro paziente</button></div>';
         $("a").onclick = viewNew;
       }).catch(function () { b.disabled = false; b.textContent = "Richiedi recensione"; $("e").textContent = "Qualcosa non ha funzionato, riprova."; });
     };
