@@ -103,12 +103,17 @@
     $("ttl").textContent = "I miei clienti";
     var h = "";
     CLIENTS.forEach(function (c) {
-      h += '<button class="card cl" data-c="' + c.id + '"><h2>' + esc(c.nome) + '</h2><small>' + esc(c.sub) + '</small><div class="row" id="r_' + c.id + '"><div><b>…</b><span>caricamento</span></div></div></button>';
+      h += '<div class="card cl" role="button" data-c="' + c.id + '"><h2>' + esc(c.nome) + '</h2><small>' + esc(c.sub) + '</small><div class="row" id="r_' + c.id + '"><div><b>…</b><span>caricamento</span></div></div></div>';
     });
     app.innerHTML = h;
     CLIENTS.forEach(function (c) {
-      var b = document.querySelector('[data-c="' + c.id + '"]'); b.onclick = function () { detail(c.id, "res"); };
-      if (!key(c)) { $("r_" + c.id).innerHTML = '<div><span style="text-transform:none;font-size:13px">Chiave mancante: apri il link con la chiave di questo cliente.</span></div>'; return; }
+      var b = document.querySelector('[data-c="' + c.id + '"]'); b.onclick = function (e) { if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return; if (!key(c)) return; detail(c.id, "res"); };
+      if (!key(c)) {
+        $("r_" + c.id).innerHTML = '<div><span style="text-transform:none;font-size:13px">Incolla qui la chiave di ' + esc(c.nome) + '</span><input id="ki_' + c.id + '" style="margin-top:8px" placeholder="Chiave" autocomplete="off"><button class="go" style="margin-top:8px;padding:12px" id="kb_' + c.id + '">Salva</button></div>';
+        $("ki_" + c.id).onclick = $("kb_" + c.id).onclick = function (e) { e.stopPropagation(); };
+        $("kb_" + c.id).onclick = function (e) { e.stopPropagation(); var v = $("ki_" + c.id).value.trim(); if (v) { ls("m_" + c.id, v); home(); } };
+        return;
+      }
       load(c).then(function (o) {
         DATA[c.id] = o;
         if (!$("r_" + c.id)) return;
