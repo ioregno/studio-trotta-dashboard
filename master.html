@@ -49,6 +49,8 @@
   .bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin-top: 8px; } .bars div { flex: 1; text-align: center; font-size: 10px; color: var(--muted); } .bars i { display: block; background: var(--acc); border-radius: 6px 6px 2px 2px; margin-bottom: 3px; }
   .d { font-size: 12px; font-weight: 700; margin-left: 4px; } .d.u { color: var(--ok); } .d.n { color: var(--bad); }
   .kpi .st { color: #f2b01e; letter-spacing: 1px; text-transform: none; }
+  .ab { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; } .ab th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; text-align: right; padding: 6px 0; } .ab th:first-child, .ab td:first-child { text-align: left; } .ab td { padding: 10px 0; border-top: 1px solid var(--line); text-align: right; } .ab td:first-child { color: var(--muted); } .ab small { color: var(--muted); display: block; font-size: 11px; }
+  .sw { display: flex; align-items: center; justify-content: space-between; gap: 10px; } .sw button { border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 20px; } .sw button.on { background: var(--ok); border-color: var(--ok); color: #06210f; }
   a.lnk { color: var(--acc); text-decoration: none; font-size: 14px; }
 </style>
 </head>
@@ -56,7 +58,7 @@
 <div class="w">
   <div class="top"><img src="master-logo.png" alt="" style="width:46px;height:46px;border-radius:12px"><h1 id="ttl">I miei clienti</h1><button class="ib" id="kk" aria-label="Chiavi">🔑</button><button class="ib" id="rf" aria-label="Aggiorna">↻</button></div>
   <div id="app"></div>
-  <div class="muted" style="text-align:center;margin-top:24px;font-size:11px">versione 17</div>
+  <div class="muted" style="text-align:center;margin-top:24px;font-size:11px">versione 18</div>
 </div>
 <script>
 (function () {
@@ -103,7 +105,7 @@
     } else {
       o.inviate = s.inviati; o.risposte = s.risposte; o.media = s.risposte ? s.media : null; o.google = s.click; o.dist = s.dist; o.aperti = s.aperti; o.nonAperti = s.nonAperti;
       o.voti = s.ultimi.map(function (v) { return { nome: v.nome, voto: v.voto, testo: v.commento, google: null, sub: "", data: v.data }; });
-      o.richieste = s.richieste; o.bozze = s.programmati || 0;
+      o.richieste = s.richieste; o.bozze = s.programmati || 0; o.ab = s.ab || null;
     }
     return o;
   }
@@ -147,10 +149,30 @@
     $("bk").onclick = home;
     [].forEach.call(document.querySelectorAll(".tabs button"), function (b) { b.onclick = function () { detail(id, b.dataset.t); }; });
     if (o.ok && tab === "agg") bindAgg(c, o);
+    if (o.ok && tab === "res") bindAb(c, o);
+  }
+
+  function abCard(o) {
+    var a = o.ab; if (!a) return "";
+    function pc(n, t) { return t ? Math.round(n / t * 100) + "%" : "–"; }
+    var h = '<div class="card"><div class="sw"><div><b>Test A/B</b><div class="muted" style="margin-top:2px">' + (a.attivo ? 'Acceso: i nuovi SMS alternano A e B' : 'Spento: tutti gli SMS sono versione A, come prima') + '</div></div><button id="abt" class="' + (a.attivo ? "on" : "") + '">' + (a.attivo ? "Acceso" : "Spento") + '</button></div>';
+    h += '<div class="muted" style="margin-top:10px;font-size:12px"><b>A</b> = SMS con link alla pagina voto · <b>B</b> = SMS con link che porta dritto alla recensione Google</div>';
+    h += '<table class="ab"><tr><th></th><th>A</th><th>B</th></tr><tr><td>SMS inviati</td><td>' + a.A.inviati + '</td><td>' + a.B.inviati + '</td></tr><tr><td>Click su Google<small>sugli SMS inviati</small></td><td>' + a.A.click + ' · ' + pc(a.A.click, a.A.inviati) + '</td><td>' + a.B.click + ' · ' + pc(a.B.click, a.B.inviati) + '</td></tr><tr><td>Voti<small>solo A</small></td><td>' + a.A.votati + (a.A.votati ? ' · ' + fix(a.A.media) + '★' : '') + '</td><td>–</td></tr></table>';
+    h += '<div class="muted" style="margin-top:10px;font-size:12px">Con pochi SMS la differenza può essere solo fortuna: aspetta almeno 100 per versione prima di decidere, di più se i due risultati sono vicini. Il click non garantisce che la recensione venga scritta.</div></div>';
+    return h;
+  }
+  function bindAb(c, o) {
+    var b = $("abt"); if (!b) return;
+    b.onclick = function () {
+      b.disabled = true; cclear();
+      fetch(B + "carissimi-ab", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ k: key(c), on: !o.ab.attivo }) })
+        .then(function (r) { return r.json(); }).then(function (j) { if (!j || !j.ok) throw 0; o.ab.attivo = j.attivo; detail(c.id, "res"); })
+        .catch(function () { b.disabled = false; alert("Non sono riuscito a cambiare, riprova."); });
+    };
   }
 
   function resoconto(c, o) {
-    var h = "";
+    var h = abCard(o);
     if (o.g) h += '<div class="card"><div class="grid"><div class="kpi"><b>' + o.g.L.recensioni + dl(o.g.L.recensioni, o.g.P && o.g.P.recensioni) + '</b><span>Recensioni su Google</span></div><div class="kpi"><b>' + fix(o.g.L.media) + ' <span class="st" style="font-size:15px;text-transform:none">' + stars(Math.round(o.g.L.media)) + '</span></b><span>Punteggio</span></div></div><div style="margin-top:12px"><a class="lnk" href="' + c.scheda + '" target="_blank" rel="noopener">Apri la scheda Google ↗</a></div></div>';
     h += '<h3>Richieste di recensione</h3><div class="card"><div class="grid"><div class="kpi"><b>' + o.inviate + '</b><span>Richieste inviate</span></div><div class="kpi"><b>' + o.risposte + '</b><span>Feedback lasciati</span></div><div class="kpi"><b>' + (o.media == null ? "–" : fix(o.media)) + '</b><span>Voto medio</span></div><div class="kpi"><b>' + o.google + '</b><span>Hanno aperto Google</span></div>' +
       (o.aperti != null ? '<div class="kpi"><b>' + o.aperti + '</b><span>Hanno aperto il link</span></div><div class="kpi"><b>' + o.nonAperti + '</b><span>Non ancora aperto</span></div>' : "") + '</div>' +
