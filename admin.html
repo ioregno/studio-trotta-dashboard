@@ -127,20 +127,20 @@
 
   // la chiave arriva dal link (#k=...) la prima volta e resta salvata sul telefono
   var m = location.hash.match(/(?:^#|&)k=([^&]+)/);
-  if (m) { LS.set("adm_k", decodeURIComponent(m[1])); }
+  if (m) { LS.set("adm_k", decodeURIComponent(m[1])); LS.set("shared_k", decodeURIComponent(m[1])); }
   var ma = location.hash.match(/(?:^#|&)a=([^&]+)/);
   if (ma) { LS.set("adm_a", decodeURIComponent(ma[1])); }
   var AKEY = LS.get("adm_a");
   var r2 = location.hash.match(/(?:^#|&)r=([^&]+)/);
   if (r2) { try { localStorage.setItem("tk", decodeURIComponent(r2[1])); } catch (e) {} }
   if (m || r2 || ma) history.replaceState(null, "", location.pathname);
-  var KEY = LS.get("adm_k");
+  var KEY = LS.get("adm_k") || LS.get("shared_k") || LS.get("trotta_k") || LS.get("adm_k");
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   function askKey() {
     app.innerHTML = '<div class="card msg">Per vedere i dati apri il link privato che ti ha dato Giulio, oppure incolla qui la chiave.<br><input id="k" style="margin-top:12px;width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;font:inherit"><br><button id="ks">Entra</button></div>';
-    $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("adm_k", v); KEY = v; go(TAB); } };
+    $("ks").onclick = function () { var v = $("k").value.trim(); if (v) { LS.set("adm_k", v); LS.set("shared_k", v); KEY = v; go(TAB); } };
   }
 
   function render(d) {
@@ -178,7 +178,7 @@
     fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (!d || !d.ok) { LS.set("adm_k", ""); KEY = ""; return askKey(); }
+        if (!d || !d.ok) { if (d && d.errore === "chiave") { LS.set("adm_k", ""); LS.set("shared_k", ""); KEY = ""; return askKey(); } throw new Error("x"); }
         LS.set("adm_cache", JSON.stringify(d)); if (TAB === "res") render(d);
       })
       .catch(function () {
@@ -278,7 +278,7 @@
     app.innerHTML = '<div class="card msg">Carico i dati…</div>';
     fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
       if (TAB !== "goo") return;
-      if (!d || !d.ok) { LS.set("adm_k", ""); KEY = ""; return askKey(); }
+      if (!d || !d.ok) { if (d && d.errore === "chiave") { LS.set("adm_k", ""); LS.set("shared_k", ""); KEY = ""; return askKey(); } throw new Error("x"); }
       var r = d.righe || [], L = r[r.length - 1], P = r[r.length - 2], h = "";
       if (!L) h += '<div class="card msg">Ancora nessun dato. Aggiungi i primi numeri qui sotto.</div>';
       else {
