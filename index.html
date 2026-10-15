@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e6569">
+<meta name="theme-color" content="#116569">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Feedback">
@@ -83,6 +83,28 @@
   details summary::-webkit-details-marker { display: none; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 </style>
+<style>
+  /* tema scuro verde petrolio, stile Barberia Carissimi */
+  :root{--brand:#e6eeef;--soft:rgba(255,255,255,.08);--text:#e6eeef;--muted:rgba(230,238,239,.68);--line:rgba(230,238,239,.16)}
+  body{background:#116569}
+  header{background:none;border-radius:0;padding-bottom:26px}
+  main{margin-top:0}
+  .card{background:rgba(255,255,255,.07);box-shadow:none;border:1px solid rgba(255,255,255,.12)}
+  .hero .big{color:#fff;font-weight:700}.hero .stars{color:#fff}
+  .kpi b{color:#fff;font-weight:700;letter-spacing:-.02em;font-variant-numeric:lining-nums tabular-nums}
+  .ring b{color:#fff}
+  .av{background:rgba(255,255,255,.12);color:#fff}
+  .msg button,.go{background:#e6eeef;color:#0e6569;box-shadow:none}
+  .go.ghost{background:rgba(255,255,255,.1);color:#e6eeef}
+  nav{background:rgba(14,101,105,.94);border:1px solid rgba(255,255,255,.14);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  nav button.on{background:#e6eeef;color:#0e6569;box-shadow:none}
+  input.f{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(230,238,239,.28)}
+  input.f::placeholder{color:rgba(230,238,239,.5)}
+  input.f:focus{border-color:#fff;box-shadow:none}
+  label.ora input{accent-color:#e6eeef}
+  .done .ck{background:#e6eeef;box-shadow:none}.done .ck svg{stroke:#0e6569}
+  .g{color:#e6eeef}
+</style>
 </head>
 <body>
 <header>
@@ -124,7 +146,7 @@
     var full = d.media == null ? 0 : Math.round(d.media);
     var stars = ""; for (var i = 1; i <= 5; i++) stars += i <= full ? "★" : "☆";
     var h = '<div class="card"><div class="hero"><div><div class="big">' + (d.media == null ? "–" : String(d.media).replace(".", ",")) + '</div><div class="stars">' + stars + '</div><small>voto medio su 5</small></div>' +
-      '<div class="ring"><svg width="84" height="84"><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="#e6eeef" stroke-width="9"/><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="#0e6569" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (C * pct / 100) + ' ' + C + '"/></svg><b>' + pct + '%<small>risposte</small></b></div></div>' +
+      '<div class="ring"><svg width="84" height="84"><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="9"/><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="#e6eeef" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (C * pct / 100) + ' ' + C + '"/></svg><b>' + pct + '%<small>risposte</small></b></div></div>' +
       '<div class="grid" style="margin-top:16px">' +
       '<div class="kpi"><b>' + d.inviate + '</b><span>Richieste inviate</span></div>' +
       '<div class="kpi"><b>' + d.click + '</b><span>Hanno aperto Google per recensire</span></div></div></div>';
