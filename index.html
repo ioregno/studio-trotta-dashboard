@@ -255,7 +255,7 @@
       '<label class="l" for="n">Nome e cognome</label><input class="f" id="n" placeholder="Mario Rossi" autocomplete="off">' +
       '<label class="l" for="t">Telefono</label><input class="f" id="t" type="tel" inputmode="tel" placeholder="333 1234567" autocomplete="off">' +
       '<label class="l" for="p">Problematica</label><input class="f" id="p" placeholder="Es. lombalgia, cervicale, ginocchio" autocomplete="off">' +
-      '<label class="ora"><input type="checkbox" id="o"><span>Invia ora<small>Manda l\'SMS subito invece di domani</small></span></label>' +
+      '<label class="ora"><input type="checkbox" id="o"><span>Invia subito<small>Altrimenti va in coda alle recensioni da inviare (parte domani)</small></span></label>' +
       '<label class="ora"><input type="checkbox" id="bz"><span>Solo salva, non inviare<small>Resta in attesa: lo fai partire tu quando vuoi</small></span></label>' +
       '<button class="go" id="s">Richiedi recensione</button><div class="err" id="e"></div></div><div id="bzl"></div>';
     $("o").onchange = function () { if (this.checked) $("bz").checked = false; };
