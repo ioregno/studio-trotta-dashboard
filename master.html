@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clienti">
+<link rel="manifest" href="manifest-master.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>I miei clienti</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --line:#262b35; --text:#eef0f4; --muted:#8b93a3; --acc:#7cc4ff; --ok:#43c383; --warn:#e8a74a; --bad:#e5655a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif; font-variant-numeric: lining-nums tabular-nums; min-height: 100vh; padding: calc(env(safe-area-inset-top) + 18px) 16px 40px; }
+  .w { max-width: 520px; margin: 0 auto; }
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .top h1 { font-size: 26px; margin: 0; flex: 1; letter-spacing: -.02em; }
+  .ib { background: var(--card); border: 1px solid var(--line); color: var(--text); width: 42px; height: 42px; border-radius: 14px; font-size: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
+  .cl { display: block; width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+  .cl h2 { margin: 0 0 2px; font-size: 19px; }
+  .cl small, .muted { color: var(--muted); font-size: 13px; }
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  .row div { flex: 1; } .row b { display: block; font-size: 22px; letter-spacing: -.02em; } .row span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .kpi b { display: block; font-size: 30px; letter-spacing: -.02em; line-height: 1.1; } .kpi span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  h3 { font-size: 15px; margin: 20px 2px 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+  .tabs button { flex: 1; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; font-size: 14px; padding: 11px 4px; border-radius: 10px; }
+  .tabs button.on { background: var(--text); color: var(--bg); }
+  .it { padding: 12px 0; border-top: 1px solid var(--line); } .it:first-child { border-top: 0; }
+  .it .t { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .it p { margin: 6px 0 0; font-size: 14px; color: #cfd4de; }
+  .bd { font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 20px; background: var(--line); color: var(--muted); white-space: nowrap; }
+  .bd.g { background: rgba(67,195,131,.16); color: var(--ok); } .bd.a { background: rgba(124,196,255,.16); color: var(--acc); } .bd.r { background: rgba(229,101,90,.16); color: var(--bad); }
+  .st { color: #f2b01e; letter-spacing: 1px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 2px 6px; }
+  input { width: 100%; font: inherit; font-size: 17px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-height: 52px; outline: none; -webkit-appearance: none; }
+  input:focus { border-color: var(--acc); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .go { width: 100%; margin-top: 18px; padding: 16px; border: 0; border-radius: 14px; background: var(--text); color: var(--bg); font: inherit; font-weight: 700; font-size: 16px; }
+  .go:disabled { opacity: .5; } .err { color: var(--bad); text-align: center; font-size: 14px; min-height: 18px; margin-top: 10px; }
+  .back { background: none; border: 0; color: var(--acc); font: inherit; font-size: 15px; padding: 0; margin-bottom: 12px; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin-top: 8px; } .bars div { flex: 1; text-align: center; font-size: 10px; color: var(--muted); } .bars i { display: block; background: var(--acc); border-radius: 6px 6px 2px 2px; margin-bottom: 3px; }
+  .d { font-size: 12px; font-weight: 700; margin-left: 4px; } .d.u { color: var(--ok); } .d.n { color: var(--bad); }
+  .kpi .st { color: #f2b01e; letter-spacing: 1px; text-transform: none; }
+  a.lnk { color: var(--acc); text-decoration: none; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><h1 id="ttl">I miei clienti</h1><button class="ib" id="rf" aria-label="Aggiorna">↻</button></div>
+  <div id="app"></div>
+</div>
+<script>
+(function () {
+  var B = "https://giuliog.app.n8n.cloud/webhook/";
+  // Le chiavi dei clienti non stanno nel codice: arrivano dal link (#t=...&c=...) e restano sul telefono.
+  var CLIENTS = [
+    { id: "t", nome: "Studio Trotta", sub: "Fisioterapia e osteopatia · Terni", stats: "trotta-stats", google: "trotta-google", salva: "trotta-google-salva", scheda: "https://g.page/r/CbRUZ80fe1BFEBM", app: "https://ioregno.github.io/studio-trotta-dashboard/" },
+    { id: "c", nome: "Barberia Carissimi", sub: "Barbiere · Terni", stats: "carissimi-stats", google: "carissimi-google", salva: "carissimi-google-salva", scheda: "https://www.google.com/search?q=Barberia+Carissimi+Terni", app: "https://giuliog.app.n8n.cloud/webhook/carissimi-app?k=" }
+  ];
+  var $ = function (i) { return document.getElementById(i); };
+  var app = $("app");
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var h = location.hash.replace(/^#/, "");
+  if (h) { h.split("&").forEach(function (p) { var i = p.indexOf("="); if (i > 0) ls("m_" + p.slice(0, i), decodeURIComponent(p.slice(i + 1))); }); history.replaceState(null, "", location.pathname); }
+  function key(c) { return ls("m_" + c.id) || ""; }
+  function get(c, ep) { return fetch(B + ep + "?k=" + encodeURIComponent(key(c)), { cache: "no-store" }).then(function (r) { return r.json(); }); }
+  function post(c, body) { body.k = key(c); return fetch(B + c.salva, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+  function fix(n) { return n == null ? "–" : String(Math.round(n * 10) / 10).replace(".", ","); }
+  function dl(a, b) { if (a == null || b == null) return ""; var d = Math.round((a - b) * 10) / 10; if (!d) return ""; return '<span class="d ' + (d > 0 ? "u" : "n") + '">' + (d > 0 ? "▲ +" : "▼ ") + String(d).replace(".", ",") + "</span>"; }
+  function stars(n) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= n ? "★" : "☆"; return s; }
+
+  // porta ogni cliente allo stesso formato
+  function norm(c, s, g) {
+    var o = { c: c, ok: !!(s && (s.ok || s.errore == null) && !s.errore), g: null };
+    if (g && g.ok && g.righe && g.righe.length) o.g = { L: g.righe[g.righe.length - 1], P: g.righe[g.righe.length - 2], R: g.righe };
+    if (!o.ok) return o;
+    if (c.id === "t") {
+      o.inviate = s.inviate; o.risposte = s.risposte; o.media = s.media; o.google = s.click; o.dist = s.distribuzione;
+      o.voti = s.voti.map(function (v) { return { nome: v.nome, voto: v.voto, testo: v.commento, google: v.google, sub: v.trattamento, data: v.data }; });
+      o.richieste = null; o.bozze = s.bozze ? s.bozze.length : 0;
+    } else {
+      o.inviate = s.inviati; o.risposte = s.risposte; o.media = s.risposte ? s.media : null; o.google = s.click; o.dist = s.dist; o.aperti = s.aperti; o.nonAperti = s.nonAperti;
+      o.voti = s.ultimi.map(function (v) { return { nome: v.nome, voto: v.voto, testo: v.commento, google: null, sub: "", data: v.data }; });
+      o.richieste = s.richieste; o.bozze = s.programmati || 0;
+    }
+    return o;
+  }
+  function load(c) {
+    return Promise.all([get(c, c.stats).catch(function () { return null; }), get(c, c.google).catch(function () { return null; })]).then(function (r) { return norm(c, r[0], r[1]); });
+  }
+
+  var DATA = {};
+  function home() {
+    $("ttl").textContent = "I miei clienti";
+    var h = "";
+    CLIENTS.forEach(function (c) {
+      h += '<button class="card cl" data-c="' + c.id + '"><h2>' + esc(c.nome) + '</h2><small>' + esc(c.sub) + '</small><div class="row" id="r_' + c.id + '"><div><b>…</b><span>caricamento</span></div></div></button>';
+    });
+    app.innerHTML = h;
+    CLIENTS.forEach(function (c) {
+      var b = document.querySelector('[data-c="' + c.id + '"]'); b.onclick = function () { detail(c.id, "res"); };
+      if (!key(c)) { $("r_" + c.id).innerHTML = '<div><span style="text-transform:none;font-size:13px">Chiave mancante: apri il link con la chiave di questo cliente.</span></div>'; return; }
+      load(c).then(function (o) {
+        DATA[c.id] = o;
+        if (!$("r_" + c.id)) return;
+        if (!o.ok) { $("r_" + c.id).innerHTML = '<div><span style="text-transform:none;font-size:13px">Non riesco a leggere i dati (chiave o rete).</span></div>'; return; }
+        $("r_" + c.id).innerHTML = '<div><b>' + o.inviate + '</b><span>Inviate</span></div><div><b>' + o.risposte + '</b><span>Feedback</span></div><div><b>' + (o.media == null ? "–" : fix(o.media)) + '</b><span>Voto</span></div><div><b>' + (o.g ? o.g.L.recensioni : "–") + '</b><span>Su Google</span></div>';
+      });
+    });
+  }
+
+  function detail(id, tab) {
+    var c = CLIENTS.filter(function (x) { return x.id === id; })[0], o = DATA[id];
+    $("ttl").textContent = c.nome;
+    if (!o) { app.innerHTML = '<div class="card muted">Carico…</div>'; return load(c).then(function (x) { DATA[id] = x; detail(id, tab); }); }
+    var h = '<button class="back" id="bk">‹ Tutti i clienti</button><div class="tabs"><button data-t="res" class="' + (tab === "res" ? "on" : "") + '">Resoconto</button><button data-t="agg" class="' + (tab === "agg" ? "on" : "") + '">Aggiorna dati</button></div>';
+    if (!o.ok) h += '<div class="card muted">Non riesco a leggere i dati di questo cliente. Controlla la chiave nel link o riprova.</div>';
+    else if (tab === "res") h += resoconto(c, o); else h += aggiorna(c, o);
+    app.innerHTML = h;
+    $("bk").onclick = home;
+    [].forEach.call(document.querySelectorAll(".tabs button"), function (b) { b.onclick = function () { detail(id, b.dataset.t); }; });
+    if (o.ok && tab === "agg") bindAgg(c, o);
+  }
+
+  function resoconto(c, o) {
+    var h = "";
+    if (o.g) h += '<div class="card"><div class="grid"><div class="kpi"><b>' + o.g.L.recensioni + dl(o.g.L.recensioni, o.g.P && o.g.P.recensioni) + '</b><span>Recensioni su Google</span></div><div class="kpi"><b>' + fix(o.g.L.media) + ' <span class="st" style="font-size:15px;text-transform:none">' + stars(Math.round(o.g.L.media)) + '</span></b><span>Punteggio</span></div></div><div style="margin-top:12px"><a class="lnk" href="' + c.scheda + '" target="_blank" rel="noopener">Apri la scheda Google ↗</a></div></div>';
+    h += '<h3>Richieste di recensione</h3><div class="card"><div class="grid"><div class="kpi"><b>' + o.inviate + '</b><span>Richieste inviate</span></div><div class="kpi"><b>' + o.risposte + '</b><span>Feedback lasciati</span></div><div class="kpi"><b>' + (o.media == null ? "–" : fix(o.media)) + '</b><span>Voto medio</span></div><div class="kpi"><b>' + o.google + '</b><span>Hanno aperto Google</span></div>' +
+      (o.aperti != null ? '<div class="kpi"><b>' + o.aperti + '</b><span>Hanno aperto il link</span></div><div class="kpi"><b>' + o.nonAperti + '</b><span>Non ancora aperto</span></div>' : "") + '</div>' +
+      (o.bozze ? '<div class="muted" style="margin-top:10px">' + o.bozze + ' in attesa di invio o in programma</div>' : "") + '</div>';
+    h += '<h3>Chi ha lasciato un feedback</h3><div class="card">';
+    if (!o.voti.length) h += '<div class="muted">Ancora nessun feedback.</div>';
+    o.voti.forEach(function (v) {
+      h += '<div class="it"><div class="t"><b>' + esc(v.nome) + '</b><span><span class="st">' + stars(v.voto) + '</span></span></div>' + (v.sub ? '<div class="muted">' + esc(v.sub) + '</div>' : "") + (v.testo ? '<p>' + esc(v.testo) + '</p>' : "") +
+        (v.google === true ? '<div style="margin-top:6px"><span class="bd g">Ha aperto Google</span></div>' : v.google === false ? '<div style="margin-top:6px"><span class="bd">Non ha aperto Google</span></div>' : "") + '</div>';
+    });
+    h += "</div>";
+    if (o.richieste) {
+      h += '<h3>Tutte le richieste</h3><div class="card">';
+      if (!o.richieste.length) h += '<div class="muted">Nessuna richiesta.</div>';
+      o.richieste.forEach(function (r) {
+        var b = r.voto ? '<span class="bd g">Ha votato ' + r.voto + '★</span>' : r.aperto ? '<span class="bd a">Ha aperto il link</span>' : r.stato === "in_attesa_voto" ? '<span class="bd">Non ancora aperto</span>' : (r.stato === "da_inviare" || r.stato === "invio_immediato") ? '<span class="bd">In programma</span>' : '<span class="bd r">Non inviato</span>';
+        h += '<div class="it"><div class="t"><b>' + esc(r.nome) + '</b>' + b + '</div><div class="muted">' + esc(r.data) + (r.google ? ' · ha aperto Google' : '') + '</div></div>';
+      });
+      h += "</div>";
+    }
+    return h;
+  }
+
+  function aggiorna(c, o) {
+    var L = o.g && o.g.L, h = '';
+    if (L) {
+      h += '<div class="card"><div class="muted">Ultimo aggiornamento: ' + esc(String(L.data).split("-").reverse().join("/")) + '</div><div class="grid" style="margin-top:10px">' +
+        [["chiamate", "Chiamate"], ["indicazioni", "Indicazioni"], ["sito", "Visite al sito"], ["recensioni", "Recensioni"]].map(function (x) { return '<div class="kpi"><b>' + L[x[0]] + dl(L[x[0]], o.g.P && o.g.P[x[0]]) + '</b><span>' + x[1] + '</span></div>'; }).join("") + '</div><div class="kpi" style="margin-top:10px"><b>' + fix(L.media) + '</b><span>Punteggio medio</span></div>';
+      if (o.g.R.length > 1) {
+        var mx = Math.max.apply(null, o.g.R.map(function (x) { return x.chiamate; }).concat([1]));
+        h += '<h3 style="margin-top:16px">Chiamate nel tempo</h3><div class="bars">' + o.g.R.slice(-12).map(function (x) { return '<div><i style="height:' + Math.max(4, Math.round(x.chiamate / mx * 70)) + 'px"></i>' + x.chiamate + '</div>'; }).join("") + '</div>';
+      }
+      h += '</div>';
+    } else h += '<div class="card muted">Ancora nessun dato. Inserisci i primi numeri.</div>';
+    h += '<div class="card"><b>Nuovi numeri</b><div class="two"><div><label>Chiamate</label><input id="g1" type="number" inputmode="numeric"></div><div><label>Indicazioni</label><input id="g2" type="number" inputmode="numeric"></div><div><label>Visite sito</label><input id="g3" type="number" inputmode="numeric"></div><div><label>N° recensioni</label><input id="g4" type="number" inputmode="numeric"></div></div><label>Punteggio medio</label><input id="g5" inputmode="decimal" placeholder="4,8"><button class="go" id="gs">Salva</button><div class="err" id="ge"></div></div>';
+    return h;
+  }
+  function bindAgg(c, o) {
+    $("gs").onclick = function () {
+      var v = [1, 2, 3, 4, 5].map(function (i) { return $("g" + i).value; });
+      if (v.some(function (x) { return x === ""; })) { $("ge").textContent = "Compila tutti i campi."; return; }
+      var b = $("gs"); b.disabled = true; b.textContent = "Salvo…";
+      post(c, { chiamate: v[0], indicazioni: v[1], sito: v[2], recensioni: v[3], media: v[4] }).then(function (j) { if (!j || !j.ok) throw 0; return load(c); })
+        .then(function (x) { DATA[c.id] = x; detail(c.id, "agg"); })
+        .catch(function () { b.disabled = false; b.textContent = "Salva"; $("ge").textContent = "Non sono riuscito a salvare, riprova."; });
+    };
+  }
+
+  $("rf").onclick = function () { DATA = {}; home(); };
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+  home();
+})();
+</script>
+</body>
+</html>
