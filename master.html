@@ -73,8 +73,20 @@
   var h = location.hash.replace(/^#/, "");
   if (h) { h.split("&").forEach(function (p) { var i = p.indexOf("="); if (i > 0) ls("m_" + p.slice(0, i), decodeURIComponent(p.slice(i + 1))); }); history.replaceState(null, "", location.pathname); }
   function key(c) { return ls("m_" + c.id) || ""; }
-  function get(c, ep) { return fetch(B + ep + "?k=" + encodeURIComponent(key(c)), { cache: "no-store" }).then(function (r) { return r.json(); }); }
-  function post(c, body) { body.k = key(c); return fetch(B + c.salva, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
+  // Cache breve nel browser: cambiare scheda o riaprire l'app entro pochi minuti non richiama n8n.
+  var CG_MIN = 5 * 60e3, CG_GOO = 60 * 60e3;
+  function cget(url, ttl) {
+    var now = Date.now(), c = null;
+    try { c = JSON.parse(sessionStorage.getItem("cg:" + url) || "null"); } catch (e) {}
+    if (c && now - c.t < ttl) return Promise.resolve(c.d);
+    return fetch(url, { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) { try { sessionStorage.setItem("cg:" + url, JSON.stringify({ t: now, d: d })); } catch (e) {} }
+      return d;
+    });
+  }
+  function cclear() { try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf("cg:") === 0) sessionStorage.removeItem(k); }); } catch (e) {} }
+  function get(c, ep) { return cget(B + ep + "?k=" + encodeURIComponent(key(c)), CG_MIN); }
+  function post(c, body) { cclear(); body.k = key(c); return fetch(B + c.salva, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
   function fix(n) { return n == null ? "–" : String(Math.round(n * 10) / 10).replace(".", ","); }
   function dl(a, b) { if (a == null || b == null) return ""; var d = Math.round((a - b) * 10) / 10; if (!d) return ""; return '<span class="d ' + (d > 0 ? "u" : "n") + '">' + (d > 0 ? "▲ +" : "▼ ") + String(d).replace(".", ",") + "</span>"; }
   function stars(n) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= n ? "★" : "☆"; return s; }

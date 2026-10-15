@@ -156,7 +156,7 @@
       $("gtop").innerHTML = h;
     }
     var c = LS.get("g_cache"); if (c) { try { show(JSON.parse(c)); } catch (e) { show(null); } } else show(null);
-    fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+    cget(API_G + "?k=" + encodeURIComponent(KEY), CG_GOO).then(function (d) {
       if (!d || !d.ok || !d.righe || !d.righe.length) return;
       var L = d.righe[d.righe.length - 1]; LS.set("g_cache", JSON.stringify({ recensioni: L.recensioni, media: L.media })); show(L);
     }).catch(function () {});
@@ -195,8 +195,7 @@
   function loadRes() {
     if (!KEY) return askKey();
     app.innerHTML = '<div class="card msg">Carico i dati…</div>';
-    fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" })
-      .then(function (r) { return r.json(); })
+    cget(API + "?k=" + encodeURIComponent(KEY), CG_MIN)
       .then(function (d) {
         if (!d || !d.ok) { if (d && d.errore === "chiave") { LS.set("adm_k", ""); LS.set("shared_k", ""); KEY = ""; return askKey(); } throw new Error("x"); }
         LS.set("adm_cache", JSON.stringify(d)); if (TAB === "res") render(d);
@@ -229,7 +228,20 @@
   }
   [].forEach.call(document.querySelectorAll("#nav button"), function (b) { b.onclick = function () { go(b.dataset.t); }; });
 
+  // Cache breve nel browser: cambiare scheda o riaprire l'app entro pochi minuti non richiama n8n.
+  var CG_MIN = 5 * 60e3, CG_GOO = 60 * 60e3;
+  function cget(url, ttl) {
+    var now = Date.now(), c = null;
+    try { c = JSON.parse(sessionStorage.getItem("cg:" + url) || "null"); } catch (e) {}
+    if (c && now - c.t < ttl) return Promise.resolve(c.d);
+    return fetch(url, { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) { try { sessionStorage.setItem("cg:" + url, JSON.stringify({ t: now, d: d })); } catch (e) {} }
+      return d;
+    });
+  }
+  function cclear() { try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf("cg:") === 0) sessionStorage.removeItem(k); }); } catch (e) {} }
   function post(url, body) {
+    cclear();
     body.k = KEY;
     return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
   }
@@ -240,7 +252,7 @@
   }
 
   function loadBozze() {
-    fetch(API + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+    cget(API + "?k=" + encodeURIComponent(KEY), CG_MIN).then(function (d) {
       var el = $("bzl"); if (!el || !d || !d.ok || !d.bozze || !d.bozze.length) return;
       var h = '<div class="card"><h2 style="font-size:18px;margin:0 0 4px">In attesa di invio (' + d.bozze.length + ')</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:8px">Non partiranno finché non li fai partire tu.</div>';
       d.bozze.forEach(function (b, i) {
@@ -318,7 +330,7 @@
   function viewGoogle() {
     $("agg").textContent = "Scheda Google";
     app.innerHTML = '<div class="card msg">Carico i dati…</div>';
-    fetch(API_G + "?k=" + encodeURIComponent(KEY), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+    cget(API_G + "?k=" + encodeURIComponent(KEY), CG_GOO).then(function (d) {
       if (TAB !== "goo") return;
       if (!d || !d.ok) { if (d && d.errore === "chiave") { LS.set("adm_k", ""); LS.set("shared_k", ""); KEY = ""; return askKey(); } throw new Error("x"); }
       var r = d.righe || [], L = r[r.length - 1], P = r[r.length - 2], h = "";
