@@ -54,7 +54,7 @@
 </head>
 <body>
 <div class="w">
-  <div class="top"><img src="master-logo.png" alt="" style="width:46px;height:46px;border-radius:12px"><h1 id="ttl">I miei clienti</h1><button class="ib" id="rf" aria-label="Aggiorna">↻</button></div>
+  <div class="top"><img src="master-logo.png" alt="" style="width:46px;height:46px;border-radius:12px"><h1 id="ttl">I miei clienti</h1><button class="ib" id="kk" aria-label="Chiavi">🔑</button><button class="ib" id="rf" aria-label="Aggiorna">↻</button></div>
   <div id="app"></div>
 </div>
 <script>
@@ -186,7 +186,18 @@
     };
   }
 
+  function chiavi() {
+    $("ttl").textContent = "Chiavi";
+    var h = '<button class="back" id="bk">‹ Indietro</button><div class="card"><div class="muted">Incolla la chiave di ogni cliente. Restano salvate su questo telefono.</div>';
+    CLIENTS.forEach(function (c) { h += '<label>' + esc(c.nome) + '</label><input id="kv_' + c.id + '" value="' + esc(key(c)) + '" placeholder="Chiave" autocomplete="off" autocapitalize="off" spellcheck="false">'; });
+    h += '<button class="go" id="ksv">Salva</button><div class="err" id="kerr"></div></div>';
+    app.innerHTML = h;
+    $("bk").onclick = home;
+    $("ksv").onclick = function () { CLIENTS.forEach(function (c) { ls("m_" + c.id, $("kv_" + c.id).value.trim()); }); DATA = {}; home(); };
+  }
+
   $("rf").onclick = function () { DATA = {}; home(); };
+  $("kk").onclick = chiavi;
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
   home();
 })();
